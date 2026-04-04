@@ -1,38 +1,510 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>GigShield AI</title>
-<link rel="stylesheet" href="style.css">
-</head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GigShield — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#faf8f4;--bg2:#f5f0e8;--surface:#ffffff;--card:#fffefb;--peach:#f4a96a;--peach-lt:#fde9d3;
+  --peach-dk:#e8874a;--sage:#7ab5a0;--sage-lt:#d6ede7;--sage-dk:#4d9982;--lavender:#9b8ec4;--lav-lt:#e8e4f5;
+  --lav-dk:#7b6ba8;--rose:#e07b8a;--rose-lt:#fce8eb;--sky:#6aaccc;--sky-lt:#daeef7;--butter:#e8c96a;
+  --butter-lt:#fdf5d6;--text:#2d2a26;--text2:#5a5650;--muted:#9a948c;--border:rgba(45,42,38,0.09);
+  --shadow-sm:0 2px 12px rgba(45,42,38,0.07);--shadow-md:0 8px 32px rgba(45,42,38,0.10);--shadow-lg:0 20px 60px rgba(45,42,38,0.12);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;line-height:1.6;}
+.blob{position:absolute;border-radius:50%;filter:blur(70px);pointer-events:none;z-index:0;}
+#authGateway{position:absolute;top:0;left:0;width:100%;min-height:100vh;display:flex;justify-content:center;align-items:center;z-index:1000;background:var(--bg);}
+.auth-panel{background:var(--surface);border:1.5px solid var(--border);border-radius:28px;padding:48px 40px;width:100%;max-width:440px;position:relative;z-index:10;box-shadow:var(--shadow-lg);animation:fadeUp 0.5s ease both;}
+.auth-logo-large{font-family:'Playfair Display',serif;font-size:32px;font-weight:800;color:var(--peach-dk);text-align:center;margin-bottom:8px;display:block;}
+.auth-logo-large span{color:var(--text);}
+.auth-desc{text-align:center;font-size:14px;color:var(--text2);margin-bottom:32px;}
+.form-group-a{margin-bottom:18px;}
+.form-group-a label{display:block;font-size:12px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.form-control-a{width:100%;background:var(--bg);border:1.5px solid var(--border);color:var(--text);padding:14px 16px;border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;outline:none;}
+.form-control-a:focus{border-color:var(--peach);}
+.btn-gateway{width:100%;background:linear-gradient(135deg,var(--peach),var(--peach-dk));color:#fff;border:none;padding:16px;border-radius:50px;font-weight:700;font-size:15px;cursor:pointer;margin-top:10px;}
+.auth-swap-a{text-align:center;margin-top:24px;font-size:14px;color:var(--text2);}
+.auth-swap-a a{color:var(--sage-dk);font-weight:700;cursor:pointer;}
+.view-a{display:none;} .view-a.active{display:block;animation:fadeUp 0.3s ease both;}
 
+#dashboardContainer{display:none;opacity:0;transition:opacity 0.5s ease;}
+#dashboardContainer.active{display:block;opacity:1;}
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:16px 52px;background:rgba(250,248,244,0.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+.nav-logo{font-family:'Playfair Display',serif;font-size:22px;font-weight:800;color:var(--peach-dk);}
+.nav-logo span{color:var(--text);}
+.nav-links{display:flex;gap:28px;list-style:none;}
+.nav-links a{color:var(--muted);font-size:14px;font-weight:500;text-decoration:none;}
+.nav-profile{display:flex;align-items:center;gap:12px;}
+.profile-pill{background:var(--bg2);border:1px solid var(--border);padding:8px 16px;border-radius:50px;font-size:13px;font-weight:600;}
+.nav-logout{background:transparent;color:var(--rose);border:none;font-size:13px;font-weight:600;cursor:pointer;}
+
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:120px 24px 80px;position:relative;overflow:hidden;}
+.hero .blob:nth-child(1){width:600px;height:600px;background:rgba(244,169,106,0.18);top:-100px;left:-150px;}
+.hero .blob:nth-child(2){width:500px;height:500px;background:rgba(122,181,160,0.15);bottom:-80px;right:-100px;}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--sage-lt);border:1px solid rgba(122,181,160,0.25);border-radius:100px;padding:7px 18px;margin-bottom:32px;font-size:13px;font-weight:600;color:var(--sage-dk);animation:fadeUp 0.6s ease both;}
+.hero-badge-dot{width:7px;height:7px;border-radius:50%;background:var(--sage-dk);animation:pulseAnim 2s infinite;}
+@keyframes pulseAnim{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.5;transform:scale(1.4);}}
+h1{font-family:'Playfair Display',serif;font-size:clamp(44px,7vw,82px);font-weight:800;line-height:1.07;letter-spacing:-2px;max-width:860px;animation:fadeUp 0.7s 0.1s ease both;color:var(--text);}
+h1 em{font-style:italic;color:var(--peach-dk);}
+.hero-sub{margin-top:24px;max-width:520px;color:var(--text2);font-size:17px;line-height:1.7;font-weight:400;animation:fadeUp 0.7s 0.2s ease both;}
+.hero-stats{display:flex;gap:16px;margin-top:44px;justify-content:center;flex-wrap:wrap;animation:fadeUp 0.7s 0.4s ease both;}
+.stat-pill{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:20px 28px;text-align:center;box-shadow:var(--shadow-sm);}
+.stat-value{font-family:'Playfair Display',serif;font-size:30px;font-weight:800;color:var(--peach-dk);line-height:1;}
+.stat-label{font-size:12px;color:var(--muted);margin-top:5px;font-weight:500;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:translateY(0);}}
+
+section{padding:96px 24px;position:relative;}
+.section-inner{max-width:1100px;margin:0 auto;}
+.section-chip{display:inline-block;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--peach-dk);background:var(--peach-lt);border-radius:100px;padding:5px 14px;margin-bottom:20px;}
+.section-title{font-family:'Playfair Display',serif;font-size:clamp(30px,4vw,46px);font-weight:800;line-height:1.1;margin-bottom:14px;}
+.section-title em{font-style:italic;color:var(--peach-dk);}
+.section-sub{color:var(--text2);font-size:16px;line-height:1.7;max-width:520px;}
+.alt-bg{background:var(--bg2);}
+.reveal{opacity:0;transform:translateY(30px);transition:all 0.7s;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+
+.types-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:56px;}
+.type-card{background:var(--surface);border:1.5px solid var(--border);border-radius:24px;padding:36px 30px;position:relative;overflow:hidden;box-shadow:var(--shadow-sm);}
+.type-card::after{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:24px 24px 0 0;}
+.t-parametric::after{background:linear-gradient(90deg,var(--peach),var(--butter));}
+.t-indemnity::after{background:linear-gradient(90deg,var(--rose),var(--lavender));}
+.t-embedded::after{background:linear-gradient(90deg,var(--sage),var(--sky));}
+.type-icon-wrap{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:20px;}
+.t-parametric .type-icon-wrap{background:var(--peach-lt);}
+.t-indemnity .type-icon-wrap{background:var(--rose-lt);}
+.t-embedded .type-icon-wrap{background:var(--sage-lt);}
+.type-badge{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;}
+.t-parametric .type-badge{color:var(--peach-dk);}
+.t-indemnity .type-badge{color:var(--rose);}
+.t-embedded .type-badge{color:var(--sage-dk);}
+.type-name{font-family:'Playfair Display',serif;font-size:21px;font-weight:700;margin-bottom:22px;}
+.type-bullets{list-style:none;display:flex;flex-direction:column;gap:10px;}
+.type-bullets li{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--text2);}
+.bdot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+.t-parametric .bdot{background:var(--peach);}
+.t-indemnity .bdot{background:var(--rose);}
+.t-embedded .bdot{background:var(--sage);}
+
+.demo-wrap{background:var(--surface);border:1.5px solid var(--border);border-radius:28px;padding:44px;margin-top:52px;box-shadow:var(--shadow-md);position:relative;overflow:hidden;}
+.demo-wrap::before{content:'● LIVE';position:absolute;top:20px;right:24px;font-size:10px;font-weight:700;letter-spacing:2px;color:var(--sage-dk);background:var(--sage-lt);padding:5px 12px;border-radius:100px;}
+.demo-top{display:grid;grid-template-columns:1fr 1fr;gap:36px;margin-bottom:44px;}
+.demo-inputs{display:flex;flex-direction:column;gap:22px;}
+.inp-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px;display:block;}
+.inp-select{width:100%;background:var(--bg);border:1.5px solid var(--border);color:var(--text);padding:11px 16px;border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:500;outline:none;}
+input[type="range"]{-webkit-appearance:none;width:100%;height:5px;border-radius:5px;background:var(--peach-lt);outline:none;}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,var(--peach),var(--peach-dk));cursor:pointer;}
+.status-panel{background:linear-gradient(145deg,var(--bg),#fef5eb);border:1.5px solid rgba(244,169,106,0.2);border-radius:20px;padding:28px;}
+.gauge-center{text-align:center;}
+.gauge-number{font-family:'Playfair Display',serif;font-size:64px;font-weight:800;line-height:1;transition:color 0.5s;color:var(--peach-dk);}
+.gauge-unit{font-size:13px;color:var(--muted);}
+.gauge-track{height:8px;border-radius:8px;background:var(--peach-lt);margin-top:14px;}
+.gauge-fill{height:100%;border-radius:8px;transition:width 0.5s ease;}
+.sim-result{margin-top:24px;padding:20px 28px;border-radius:16px;background:linear-gradient(135deg,var(--sage-lt),var(--butter-lt));border:1.5px solid rgba(122,181,160,0.3);display:flex;align-items:center;justify-content:space-between;opacity:0;transition:opacity 0.5s;}
+.sim-result.show{opacity:1;}
+.sim-result-text{font-size:15px;font-weight:600;color:var(--text);}
+.sim-payout{font-family:'Playfair Display',serif;font-size:28px;font-weight:800;color:var(--peach-dk);}
+.flow-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+.flow-card{background:var(--bg);border:1.5px solid var(--border);border-radius:18px;padding:22px 18px;text-align:center;position:relative;}
+.flow-card.lit{border-color:rgba(122,181,160,0.5);background:var(--sage-lt);}
+.flow-num{width:30px;height:30px;border-radius:50%;background:var(--surface);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;margin:0 auto 12px;}
+.flow-card.lit .flow-num{background:var(--sage-dk);color:#fff;}
+.flow-title{font-size:13px;font-weight:700;margin-bottom:6px;}
+.flow-desc{font-size:12px;color:var(--text2);}
+
+.quad-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:52px;}
+.q-card{background:var(--surface);border:1.5px solid var(--border);border-radius:24px;padding:34px;box-shadow:var(--shadow-sm);}
+.q-head{display:flex;align-items:center;gap:14px;margin-bottom:24px;}
+.q-letter{width:42px;height:42px;border-radius:12px;font-family:'Playfair Display',serif;font-size:22px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+.qa .q-letter{background:var(--peach-lt);color:var(--peach-dk);}
+.qb .q-letter{background:var(--butter-lt);color:#b8860b;}
+.qc .q-letter{background:var(--lav-lt);color:var(--lav-dk);}
+.qd .q-letter{background:var(--sage-lt);color:var(--sage-dk);}
+.q-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;}
+.q-sub{font-size:12px;color:var(--muted);}
+.q-bullets{list-style:none;display:flex;flex-direction:column;gap:11px;}
+.q-bullets li{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--text2);}
+.qdot{width:6px;height:6px;border-radius:50%;margin-top:6px;flex-shrink:0;}
+.qa .qdot{background:var(--peach);}.qb .qdot{background:var(--butter);}.qc .qdot{background:var(--lavender);}.qd .qdot{background:var(--sage);}
+.q-key{margin-top:20px;padding:12px 16px;border-radius:12px;font-size:13px;font-style:italic;}
+
+.calc-card{grid-column:1/-1;background:linear-gradient(135deg,#fff9f5,#f0faf7);border:1.5px solid rgba(122,181,160,0.3);border-radius:24px;padding:48px;box-shadow:var(--shadow-md);margin-top:16px;}
+.calc-head{display:flex;align-items:center;gap:16px;margin-bottom:36px;}
+.calc-title-text{font-family:'Playfair Display',serif;font-size:24px;font-weight:800;color:var(--text);}
+.calc-badge-pill{font-size:12px;font-weight:800;padding:6px 16px;border-radius:100px;background:var(--sage-lt);color:var(--sage-dk);text-transform:uppercase;letter-spacing:1px;}
+.calc-form{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;margin-bottom:40px;}
+.calc-field label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;color:var(--muted);margin-bottom:12px;letter-spacing:1px;}
+.calc-field select{width:100%;border:1.5px solid var(--border);padding:14px 20px;border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;background:var(--surface);cursor:pointer;outline:none;transition:border-color 0.2s;}
+.calc-field select:focus{border-color:var(--sage);}
+.calc-result-row{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border-radius:20px;padding:32px 40px;border:1.5px solid var(--border);box-shadow:var(--shadow-sm);}
+.cri-val{font-family:'Playfair Display',serif;font-size:28px;font-weight:800;color:var(--peach-dk);}
+.cri-lbl{font-size:13px;font-weight:600;color:var(--muted);margin-top:4px;}
+.calc-btn{background:linear-gradient(135deg,var(--sage),var(--sage-dk));color:#fff;border:none;padding:16px 36px;border-radius:50px;font-weight:800;font-size:15px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;box-shadow:0 4px 16px rgba(77,153,130,0.3);}
+.calc-btn:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(77,153,130,0.4);}
+
+.settlement-container{display:flex;flex-direction:column;gap:20px;margin-top:40px;position:relative;}
+.settle-step{display:flex;align-items:center;gap:24px;background:var(--surface);border:1.5px solid var(--border);border-radius:24px;padding:24px 32px;box-shadow:var(--shadow-sm);transition:all 0.4s cubic-bezier(0.175,0.885,0.32,1.275);position:relative;overflow:hidden;}
+.settle-step:hover{transform:translateX(12px) scale(1.02);box-shadow:var(--shadow-lg);border-color:var(--sage);z-index:2;}
+.settle-step::before{content:'';position:absolute;left:0;top:-10%;bottom:-10%;width:6px;background:linear-gradient(180deg,var(--sage-lt),var(--sage));border-radius:6px;transition:width 0.3s;}
+.settle-step:hover::before{width:12px;}
+.settle-step.step-alt::before{background:linear-gradient(180deg,var(--peach-lt),var(--peach));}
+.settle-step.step-alt:hover{border-color:var(--peach);}
+.step-icon-wrap{width:64px;height:64px;border-radius:50%;background:var(--bg);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;box-shadow:inset 0 4px 10px rgba(0,0,0,0.04);}
+.step-content{flex-grow:1;}
+.step-badge{font-size:11px;font-weight:800;color:var(--sage-dk);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.step-alt .step-badge{color:var(--peach-dk);}
+.step-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px;}
+.step-desc{font-size:14px;color:var(--text2);line-height:1.6;max-width:80%;}
+.modern-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:32px;}
+.modern-card{background:linear-gradient(135deg,var(--surface),var(--bg));border:1.5px solid var(--border);border-radius:20px;padding:32px 28px;display:flex;flex-direction:column;gap:16px;transition:transform 0.3s,box-shadow 0.3s;box-shadow:var(--shadow-sm);}
+.modern-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-md);border-color:var(--lavender);}
+.modern-card-icon{width:56px;height:56px;border-radius:16px;background:var(--surface);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 8px 20px rgba(0,0,0,0.06);}
+.modern-card-title{font-size:16px;font-weight:800;color:var(--text);}
+.modern-card-desc{font-size:14px;color:var(--text2);line-height:1.6;}
+.ledger-wrap{margin-top:48px;border:1.5px solid var(--border);border-radius:24px;background:var(--surface);overflow:hidden;box-shadow:var(--shadow-sm);}
+.ledger-header{background:linear-gradient(135deg,var(--bg),var(--bg2));padding:20px 28px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.lh-title{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--lav-dk);}
+.lh-pulse{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--sage-dk);}
+.pulse-dot{width:8px;height:8px;background:var(--sage-dk);border-radius:50%;animation:pulseAnim 2s infinite;}
+.ledger-row{display:flex;align-items:center;justify-content:space-between;padding:20px 28px;border-bottom:1px solid var(--border);font-size:14px;transition:background 0.3s;}
+.ledger-row:hover{background:var(--bg);}
+.ledger-row:last-child{border-bottom:none;}
+.lr-hash{font-family:'Courier New',monospace;font-size:12px;color:var(--muted);margin-top:2px;}
+.lr-peril{display:inline-block;padding:4px 12px;border-radius:100px;font-size:11px;font-weight:800;background:var(--peach-lt);color:var(--peach-dk);text-transform:uppercase;}
+.lr-peril.rain{background:var(--sky-lt);color:#4286ac;}
+.lr-amt{font-family:'Playfair Display',serif;font-size:20px;font-weight:800;color:var(--text);}
+.lr-status{color:var(--sage-dk);font-weight:800;font-size:13px;display:flex;align-items:center;gap:6px;}
+.compare-wrap{margin-top:52px;border:1.5px solid var(--border);border-radius:24px;overflow:hidden;}
+.c-row{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;border-bottom:1px solid var(--border);}
+.c-row.c-head{background:linear-gradient(135deg,#fffaf6,#f5fdf9);}
+.c-cell{padding:17px 20px;font-size:14px;border-right:1px solid var(--border);}
+.c-head-cell{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;}
+
+footer{border-top:1px solid var(--border);padding:36px 52px;display:flex;align-items:center;justify-content:space-between;background:var(--surface);}
+.f-logo{font-family:'Playfair Display',serif;font-size:20px;font-weight:800;color:var(--peach-dk);}
+.f-copy{font-size:13px;color:var(--muted);}
+.f-links{display:flex;gap:22px;}
+.f-links a{font-size:13px;color:var(--muted);text-decoration:none;}
+@media(max-width:900px){
+  .types-grid,.quad-grid,.settle-flow,.channels-grid,.kp-grid,.demo-top,.calc-form{grid-template-columns:1fr;}
+  .flow-grid{grid-template-columns:1fr 1fr;}
+  .c-row{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
 <body>
 
-<h1>GigShield AI</h1>
-<p>Parametric Insurance for Gig Delivery Workers</p>
-
-<div class="box">
-<h2>Worker Registration</h2>
-
-<input type="text" placeholder="Name">
-<input type="text" placeholder="City">
-<input type="number" placeholder="Weekly Income">
-
-<button onclick="createPolicy()">Create Policy</button>
-
-<p id="policy"></p>
-
+<!-- AUTH GATEWAY -->
+<div id="authGateway">
+  <div class="blob" style="width:500px; height:500px; background:rgba(244,169,106,0.15); top:-100px; left:-100px;"></div>
+  
+  <div class="auth-panel">
+    <div class="auth-logo-large">Gig<span>Shield</span></div>
+    <p class="auth-desc" id="authSubtitle">Log in to view your live Dashboard</p>
+    
+    <div id="view-login" class="view-a active">
+      <form onsubmit="handleAuth(event)">
+        <div class="form-group-a">
+          <label>Email / Phone</label>
+          <input type="text" id="loginUser" class="form-control-a" required>
+        </div>
+        <div class="form-group-a">
+          <label>Password</label>
+          <input type="password" class="form-control-a" required>
+        </div>
+        <button type="submit" class="btn-gateway">Access Dashboard</button>
+      </form>
+      <div class="auth-swap-a">New user? <a onclick="switchAuth('signup')">Sign Up Here</a></div>
+    </div>
+    
+    <div id="view-signup" class="view-a">
+      <form onsubmit="handleAuth(event)">
+        <div class="form-group-a">
+          <label>Full Name</label>
+          <input type="text" id="signupUser" class="form-control-a" required>
+        </div>
+        <div class="form-group-a">
+          <label>City & Phone</label>
+          <input type="text" class="form-control-a" placeholder="E.g. Delhi, 9876543210" required>
+        </div>
+        <div class="form-group-a">
+          <label>Password</label>
+          <input type="password" class="form-control-a" required>
+        </div>
+        <button type="submit" class="btn-gateway" style="background:var(--sage-dk)">Register Account</button>
+      </form>
+      <div class="auth-swap-a">Already enrolled? <a onclick="switchAuth('login')">Sign In</a></div>
+    </div>
+  </div>
 </div>
 
-<div class="box">
-<h2>Simulate Disruption</h2>
+<!-- DASHBOARD -->
+<div id="dashboardContainer">
+  <nav>
+    <div class="nav-logo">Gig<span>Shield</span></div>
+    <ul class="nav-links">
+      <li><a href="#types">Insurance</a></li>
+      <li><a href="#demo">Live Demo</a></li>
+      <li><a href="#uw">Underwriting</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#settle">Settlement</a></li>
+    </ul>
+    <div class="nav-profile">
+      <span class="profile-pill">👤 <strong id="dashUserName">Active</strong></span>
+      <button class="nav-logout" onclick="logout()">Logout</button>
+    </div>
+  </nav>
 
-<button onclick="triggerClaim()">Heavy Rain Trigger</button>
+  <section class="hero">
+    <div class="hero-badge"><span class="hero-badge-dot"></span>Coverage Active · Policy #GS-0822A</div>
+    <h1>Your Coverage is<br><em>Secure & Monitored</em></h1>
+    <p class="hero-sub">You are protected against extreme AQI, Rain, and Heat. If a threshold crosses in your city while working, we pay out instantly.</p>
+    <div class="hero-stats">
+      <div class="stat-pill"><div class="stat-value">Active</div><div class="stat-label">Worker Status</div></div>
+      <div class="stat-pill"><div class="stat-value">₹500</div><div class="stat-label">Payout per Trigger</div></div>
+    </div>
+  </section>
 
-<p id="claim"></p>
+  <!-- INSURANCE TYPES -->
+  <section id="types" class="alt-bg">
+    <div class="section-inner">
+      <div class="reveal visible">
+         <span class="section-chip">Insurance Models</span>
+         <h2 class="section-title">Three models.<br><em>One clear winner.</em></h2>
+      </div>
+      <div class="types-grid">
+        <div class="type-card t-parametric reveal visible"><div class="type-badge">Our Approach</div><div class="type-name">Parametric Insurance</div><ul class="type-bullets"><li>Event-driven, index-based model</li><li>Threshold triggers</li><li>Fully automatic payout</li></ul></div>
+        <div class="type-card t-indemnity reveal visible"><div class="type-badge">Traditional</div><div class="type-name">Indemnity Based</div><ul class="type-bullets"><li>Loss-reimbursement</li><li>Requires claims manual adjudication</li><li>High latency</li></ul></div>
+        <div class="type-card t-embedded reveal visible"><div class="type-badge">Distribution</div><div class="type-name">Embedded Insurance</div><ul class="type-bullets"><li>Contextual, point-of-need</li><li>API Driven natively</li><li>Frictionless enrollment</li></ul></div>
+      </div>
+    </div>
+  </section>
 
+  <!-- DEMO -->
+  <section id="demo">
+    <div class="section-inner">
+      <div class="reveal visible">
+         <span class="section-chip" style="background:var(--sage-lt);color:var(--sage-dk)">Interactive Simulator</span>
+         <h2 class="section-title">Watch a trigger<br><em>fire in real time.</em></h2>
+      </div>
+      <div class="demo-wrap reveal visible">
+        <div class="demo-top">
+          <div class="demo-inputs">
+            <div><label class="inp-label">City</label><select class="inp-select" id="simCity"><option value="delhi">Delhi</option><option value="mumbai">Mumbai</option></select></div>
+            <div><label class="inp-label">Peril</label><select class="inp-select" id="simPeril" onchange="resetSlider()"><option value="aqi">Air Quality</option><option value="rain">Rainfall</option></select></div>
+            <div><label class="inp-label" id="sliderLbl">Level: <strong>180</strong></label><input type="range" id="simSlider" min="0" max="500" value="180" oninput="updateSim()"></div>
+          </div>
+          <div class="status-panel">
+            <div class="gauge-center"><div class="gauge-number" id="gaugeNum">180</div><div class="gauge-unit" id="gaugeUnit">Level</div><div class="gauge-track"><div class="gauge-fill" id="gaugeFill" style="width:36%;background:var(--sage)"></div></div></div>
+          </div>
+        </div>
+        <div class="flow-grid">
+            <div class="flow-card" id="fc1"><div class="flow-num">1</div><div class="flow-title">Trigger Fires</div></div>
+            <div class="flow-card" id="fc2"><div class="flow-num">2</div><div class="flow-title">Policy Checked</div></div>
+            <div class="flow-card" id="fc3"><div class="flow-num">3</div><div class="flow-title">Fraud Verified</div></div>
+            <div class="flow-card" id="fc4"><div class="flow-num">4</div><div class="flow-title">Payout Released</div></div>
+        </div>
+        <div class="sim-result" id="simResult"><div class="sim-result-text">🎉 Trigger active! Payout processed automatically.</div><div class="sim-payout">₹500</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- UW -->
+  <section id="uw" class="alt-bg">
+    <div class="section-inner">
+      <div class="reveal visible"><span class="section-chip">Underwriting + Triggers</span><h2 class="section-title">Who gets covered.<br><em>What fires the payout.</em></h2></div>
+      <div class="quad-grid">
+        <div class="q-card qa"><div class="q-head"><div class="q-letter">A</div><div><div class="q-title">Underwriting</div></div></div><ul class="q-bullets"><li>Active gig worker</li><li>Minimum 7 active delivery days before cover</li></ul></div>
+        <div class="q-card qb"><div class="q-head"><div class="q-letter">B</div><div><div class="q-title">Trigger Design</div></div></div><ul class="q-bullets"><li>AQI > 300 via CPCB</li><li>Statistical simulation & forecasting</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="pricing">
+    <div class="section-inner">
+      <div class="reveal visible"><span class="section-chip" style="background:var(--lav-lt);color:var(--lav-dk)">Pricing + Actuarial</span><h2 class="section-title">Affordable premiums.<br><em>Sustainable math.</em></h2></div>
+      <div class="quad-grid">
+        <div class="q-card qc"><div class="q-head"><div class="q-letter">C</div><div><div class="q-title">Pricing Model</div></div></div><ul class="q-bullets"><li>Target range: ₹20–₹50 per week</li><li>Base = prob × lost income × days</li></ul></div>
+        <div class="q-card qd"><div class="q-head"><div class="q-letter">D</div><div><div class="q-title">Actuarial Basics</div></div></div><ul class="q-bullets"><li>Target BCR: 0.55–0.70</li><li>Loss Ratio limit automated handling</li></ul></div>
+        <div class="calc-card">
+            <div class="calc-head"><div class="calc-title-text">Premium Calculator</div></div>
+            <div class="calc-form">
+               <div class="calc-field"><label>City</label><select id="cCity" onchange="calcPremium()"><option value="delhi">Delhi</option></select></div>
+               <div class="calc-field"><label>Peril</label><select id="cPeril" onchange="calcPremium()"><option value="aqi">AQI</option></select></div>
+               <div class="calc-field"><label>Tier</label><select id="cTier" onchange="calcPremium()"><option value="high">High</option></select></div>
+            </div>
+            <div class="calc-result-row">
+               <div><div class="cri-val" id="cWeekly">₹35</div><div class="cri-lbl">Weekly Premium</div></div>
+               <div><div class="cri-val" id="cPayout">₹500</div><div class="cri-lbl">Payout/Trigger</div></div>
+               <button class="calc-btn" onclick="calcPremium()">Calculate →</button>
+            </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTLE -->
+  <section id="settle" class="alt-bg">
+    <div class="section-inner">
+        <div class="reveal visible"><span class="section-chip" style="background:var(--lav-lt);color:var(--lav-dk)">Claim Structure</span><h2 class="section-title">Trigger fires.<br><em>System pays.</em></h2></div>
+        <div class="settlement-container reveal">
+            <div class="settle-step">
+                <div class="step-icon-wrap">🔔</div>
+                <div class="step-content">
+                    <div class="step-badge">Phase 01</div>
+                    <div class="step-title">Trigger Confirmed</div>
+                    <div class="step-desc">Oracle and weather APIs confirm the specific metric (e.g. AQI or Rainfall) has crossed your designated threshold in real-time.</div>
+                </div>
+            </div>
+            <div class="settle-step step-alt">
+                <div class="step-icon-wrap">✅</div>
+                <div class="step-content">
+                    <div class="step-badge">Phase 02</div>
+                    <div class="step-title">Automated Eligibility</div>
+                    <div class="step-desc">The smart contract instantly verifies your active shift policy, correct zone alignment, and asserts no duplicate claims exist for this event.</div>
+                </div>
+            </div>
+            <div class="settle-step">
+                <div class="step-icon-wrap">🧮</div>
+                <div class="step-content">
+                    <div class="step-badge">Phase 03</div>
+                    <div class="step-title">Payout Cached</div>
+                    <div class="step-desc">The financial engine calculates exact loss metrics (fixed amount per day × impacted hours) and securely locks the capital.</div>
+                </div>
+            </div>
+            <div class="settle-step step-alt">
+                <div class="step-icon-wrap">📲</div>
+                <div class="step-content">
+                    <div class="step-badge">Phase 04</div>
+                    <div class="step-title">Lightning Transfer</div>
+                    <div class="step-desc">Funds are dispatched autonomously via UPI or IMPS protocol directly to your registered bank account entirely under a few minutes.</div>
+                </div>
+            </div>
+            <div class="settle-step">
+                <div class="step-icon-wrap">🗂️</div>
+                <div class="step-content">
+                    <div class="step-badge">Phase 05</div>
+                    <div class="step-title">Immutable Record</div>
+                    <div class="step-desc">PolicyCenter securely logs the blockchain payout event while the BillingCenter automatically reconciles the ledger natively.</div>
+                </div>
+            </div>
+        </div>
+        <div class="ledger-wrap reveal">
+            <div class="ledger-header">
+                <div class="lh-title">Live Settlement Ledger</div>
+                <div class="lh-pulse"><div class="pulse-dot"></div> Monitoring Smart Contracts</div>
+            </div>
+            <div class="ledger-row">
+                <div><div style="font-weight:800;font-size:15px;color:var(--text)">Ravi Shankar</div><div class="lr-hash">Tx: 0x9b7a...44fe</div></div>
+                <div><span class="lr-peril">AQI > 300</span></div>
+                <div><div class="lr-amt">₹500.00</div></div>
+                <div class="lr-status">✅ Settled in 2s</div>
+            </div>
+            <div class="ledger-row">
+                <div><div style="font-weight:800;font-size:15px;color:var(--text)">Mohammed Ali</div><div class="lr-hash">Tx: 0x8a1c...29db</div></div>
+                <div><span class="lr-peril rain">Rain > 50mm</span></div>
+                <div><div class="lr-amt">₹450.00</div></div>
+                <div class="lr-status">✅ Settled in 4s</div>
+            </div>
+            <div class="ledger-row">
+                <div><div style="font-weight:800;font-size:15px;color:var(--text)">Priya K.</div><div class="lr-hash">Tx: 0x2f99...11ac</div></div>
+                <div><span class="lr-peril">AQI > 300</span></div>
+                <div><div class="lr-amt">₹500.00</div></div>
+                <div class="lr-status">✅ Settled in 1.4s</div>
+            </div>
+        </div>
+        <div style="margin-top:64px">
+            <span class="section-chip" style="background:var(--sky-lt);color:var(--sky);display:inline-block;margin-bottom:12px">Financial Integrations</span>
+            <h3 style="font-family:'Playfair Display',serif;font-size:24px;font-weight:800;margin-bottom:24px;">Supported Payout Channels</h3>
+            <div class="modern-grid reveal">
+                <div class="modern-card">
+                    <div class="modern-card-icon">⚡</div>
+                    <div><div class="modern-card-title">UPI Rapid Transfer</div><div class="modern-card-desc">Instant delivery. Preferred path designed natively for gig worker app ecosystems.</div></div>
+                </div>
+                <div class="modern-card" style="border-color:rgba(232,135,74,0.3)">
+                    <div class="modern-card-icon">🏦</div>
+                    <div><div class="modern-card-title">IMPS Fallback</div><div class="modern-card-desc">Reliable secondary protocol ensuring funds reach you even if the UPI network is congested.</div></div>
+                </div>
+                <div class="modern-card">
+                    <div class="modern-card-icon">🧪</div>
+                    <div><div class="modern-card-title">API Developer Sandbox</div><div class="modern-card-desc">Stripe / Razorpay sandbox environments built entirely for testing and simulation deployments.</div></div>
+                </div>
+            </div>
+        </div>
+        <div style="margin-top:54px">
+            <span class="section-chip" style="background:var(--butter-lt);color:#9a7010;display:inline-block;margin-bottom:12px">Architecture Features</span>
+            <div class="modern-grid reveal">
+                <div class="modern-card">
+                    <div class="modern-card-icon">🤲</div>
+                    <div><div class="modern-card-title">Zero-touch Processing</div><div class="modern-card-desc">The worker takes absolutely zero manual actions to receive their payout — fully automated end-to-end.</div></div>
+                </div>
+                <div class="modern-card">
+                    <div class="modern-card-icon">⏱️</div>
+                    <div><div class="modern-card-title">Micro-Settlement</div><div class="modern-card-desc">Settlements operate strictly in minutes, not days. We guarantee unprecedented velocity because speed creates lasting trust.</div></div>
+                </div>
+                <div class="modern-card">
+                    <div class="modern-card-icon">↩️</div>
+                    <div><div class="modern-card-title">Self-Healing Logic</div><div class="modern-card-desc">If a bank transfer fails midway, the system instantly self-recovers, retries intelligently, and triggers fallbacks.</div></div>
+                </div>
+                <div class="modern-card">
+                    <div class="modern-card-icon">🔍</div>
+                    <div><div class="modern-card-title">Pre-Emptive Fraud</div><div class="modern-card-desc">Live GPS telemetry cross-verified with platform login metrics to prevent manipulation before capital deployed.</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+  </section>
+  
+  <footer>
+    <div class="f-logo">Gig<span>Shield</span></div>
+    <div class="f-copy">© 2026 Dashboard Integration</div>
+  </footer>
 </div>
 
-<script src="script.js"></script>
+<script>
+function switchAuth(v){
+  document.getElementById('view-login').style.display=v==='login'?'block':'none';
+  document.getElementById('view-signup').style.display=v==='signup'?'block':'none';
+  if(v==='login'){document.getElementById('view-login').classList.add('active');}else{document.getElementById('view-signup').classList.add('active');}
+}
+function handleAuth(e){
+  e.preventDefault();
+  let u = document.getElementById('loginUser').value;
+  if(document.getElementById('view-signup').style.display==='block') u=document.getElementById('signupUser').value;
+  if(!u) u="Ravi";
+  document.getElementById('dashUserName').textContent = u;
+  document.getElementById('authGateway').style.display = 'none';
+  document.getElementById('dashboardContainer').classList.add('active');
+  window.scrollTo(0,0);
+}
+function logout(){
+  document.getElementById('dashboardContainer').classList.remove('active');
+  setTimeout(()=>{ document.getElementById('authGateway').style.display='flex'; switchAuth('login'); },300);
+}
 
+const cfg={aqi:{min:0,max:500,t1:300},rain:{min:0,max:200,t1:50}};
+function resetSlider(){ document.getElementById('simSlider').value=180; updateSim(); }
+function updateSim(){
+  const p=document.getElementById('simPeril').value,c=cfg[p],v=document.getElementById('simSlider').value;
+  document.getElementById('sliderLbl').innerHTML=`Measurement: <strong>${v}</strong>`;
+  document.getElementById('gaugeNum').textContent=v;
+  let col=v>=c.t1?'var(--peach-dk)':'var(--sage)';
+  document.getElementById('gaugeFill').style.width=(v/c.max)*100+'%';
+  document.getElementById('gaugeFill').style.background=col;
+  if(v>=c.t1){
+    document.getElementById('simResult').classList.add('show');
+    ['fc1','fc2','fc3','fc4'].forEach(id=>document.getElementById(id).classList.add('lit'));
+  } else {
+    document.getElementById('simResult').classList.remove('show');
+    ['fc1','fc2','fc3','fc4'].forEach(id=>document.getElementById(id).classList.remove('lit'));
+  }
+}
+function calcPremium(){ document.getElementById('cWeekly').textContent='₹'+Math.floor(Math.random()*(45-20)+20); document.getElementById('cPayout').textContent='₹500'; }
+updateSim(); calcPremium();
+</script>
 </body>
 </html>
